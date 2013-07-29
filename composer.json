@@ -1,0 +1,27 @@
+{
+    "name": "themonkeys/laravel-silverstripe",
+    "description": "Integrates the Silverstripe CMS into your Laravel application",
+    "homepage": "http://github.com/TheMonkeys/laravel-silverstripe",
+    "keywords": ["cms", "silverstripe", "content", "orm", "laravel"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "themonkeys",
+            "email": "developers@themonkeys.com.au"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "illuminate/support": "4.0.5"
+    },
+    "autoload": {
+        "classmap": [
+            "src/migrations"
+        ],
+        "psr-0": {
+            "Themonkeys\\Silverstripe": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
