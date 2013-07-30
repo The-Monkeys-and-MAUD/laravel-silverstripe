@@ -28,6 +28,7 @@ class Silverstripe {
                     \DB::connect($databaseConfig);
                 }
             }
+            \Versioned::choose_site_stage();
         }
     }
 
@@ -47,31 +48,21 @@ class Silverstripe {
         $segments = !is_null($url) ? static::segments($url) : Request::segments();
         $segment = array_shift($segments);
         if ($segment) {
-            $model = \Versioned::get_one_by_stage(
-                'SiteTree',
-                $stage,
-                sprintf(
-                    '"URLSegment" = \'%s\' %s',
-                    \Convert::raw2sql(rawurlencode($segment)),
-                    (\SiteTree::config()->nested_urls ? 'AND "ParentID" = 0' : null)
-                )
-            );
-            if ($model) {
-                while ($segment = array_shift($segments)) {
-                    $model = \Versioned::get_one_by_stage(
-                        'SiteTree',
-                        $stage,
-                        sprintf("\"ParentID\" = %s AND \"URLSegment\" = '%s'", $model->ID,
-                            \Convert::raw2sql(rawurlencode($segment))
-                        ));
-                    if (!$model) {
-                        break;
-                    }
+            $parentID = 0;
+            do {
+                $model = \SiteTree::get()->filter(array(
+                    'URLSegment' => $segment,
+                    'ParentID' => $parentID))->First();
+
+                if ($model) {
+                    $parentID = $model->ID;
+                } else {
+                    break;
                 }
-            }
+            } while ($segment = array_shift($segments));
         } else {
             // special case - home page
-            $model = \Versioned::get_one_by_stage('Home', $stage);
+            $model = \Home::get()->First();
         }
         return static::$models[$url] = $model;
     }

@@ -83,6 +83,18 @@ class YourController extends BaseController {
 }
 ```
 
+> **Important**: The default `app/controllers/BaseController.php` that ships with Laravel relies on the `Controller`
+alias as the name of its parent class, so you need to either rename `Controller` to `L_Controller` or add a `use`
+statement:
+
+```php
+<?php
+
+use Illuminate\Routing\Controllers\Controller;
+
+class BaseController extends Controller {
+```
+
 ### Install Silverstripe
 
 Visit http://www.silverstripe.org/ and decide which version of Silverstripe you'd like to use. We've tested the Laravel
@@ -127,7 +139,21 @@ integration with versions 3.0.5, 3.1.0-beta3, and the 3.1 development version (a
         RewriteRule ^ index.php [L]
     </IfModule>
     ```
+5. We'll be delivering CMS content pages via Laravel rather than via Silverstripe's built-in MVC framework; so it's a
+   good idea to disable the default `/silverstripe/` content URLs. You can do this by adding the following 404 rules
+   to your `public/silverstripe/.htaccess` file after the existing 403 rules that ship with Silverstripe:
 
+    ```ApacheConf
+    <IfModule mod_alias.c>
+        RedirectMatch 403 /silverstripe-cache(/|$)
+        RedirectMatch 403 /vendor(/|$)
+        RedirectMatch 403 /composer\.(json|lock)
+
+        # Only allow the CMS admin and dev-related silverstripe URLs.
+        RedirectMatch 404 /silverstripe/?$
+        RedirectMatch 404 /silverstripe/(?!admin|assets|cms|framework|Security|themes|dev|gridfieldextensions)
+    </IfModule>
+    ```
 
 ### Delete Silverstripe's installation files
 
@@ -217,7 +243,7 @@ php artisan silverstripe:build --flush
 ```
 
 You could use Silverstripe's web-based method instead if you prefer, by visiting
-http://yourhost.dev/silverstripe/dev/build?flush=1.
+http://mysite.dev/silverstripe/dev/build?flush=1.
 
 At the end of this you should see the message _Database build completed!_.
 
@@ -268,11 +294,133 @@ $app->redirectIfTrailingSlash();
 
 ### Log in to Silverstripe
 
-Visit http://yourhost.dev/admin/ and login with the username `admin` and the password you just set up.
+Visit http://mysite.dev/admin/ and login with the username and password you just set up.
 
 
 Usage
 -----
+
+### Routing
+
+This package adds a new kind of Laravel routes based on the Silverstripe class name of pages. For example:
+
+```php
+// an ordinary Laravel route
+Route::get('/', 'HomeController@showWelcome');
+
+// a Silverstripe route
+// matches any URL specified in the CMS with a page type (i.e. ClassName) of Page
+Route::get_silverstripe('Page', 'PageController@showPage');
+
+// an ordinary Laravel POST route
+Route::post('/form', 'FormController@saveForm');
+
+// a Silverstripe POST route
+// matches any URL specified in the CMS with a page type (i.e. ClassName) of PageWithForm and method GET
+Route::post_silverstripe('PageWithForm', 'PageController@saveForm');
+```
+
+The prefixes such as `get_`, `post_` can be any method type supported by Laravel.
+
+### Content
+
+If you've added the above example routes to your `routes.php` file, then you'll already be able to try
+http://mysite.dev/about-us/ and http://mysite.dev/contact-us/ because the default Silverstripe database comes with those
+pages built-in. If you hit them then you'll get the error `Class PageController does not exist`, so create one in
+`app/controllers/PageController.php`:
+
+```php
+<?php
+use Illuminate\Support\Facades\View;
+
+class PageController extends BaseController {
+
+    public static function showPage() {
+        return View::make('page', array(
+            'model' => CMS::model(),
+        ));
+    }
+}
+```
+
+And create the corresponding `app/views/page.blade.php`:
+
+```php
+<!DOCTYPE html>
+<html lang="utf-8">
+<head>
+    <title>{{ $model->Title }}</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {{ $model->MetaTags(false) }}
+</head>
+<body class="{{ $model->ClassName }}">
+
+    <div class="main" role="main">
+        <div class="inner typography line">
+            <div class="content-container unit size3of4 lastUnit">
+                <article>
+                    <h1>{{ $model->Title }}</h1>
+                    <div class="content">{{ $model->Content }}</div>
+                </article>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+```
+
+Now visit http://mysite.dev/about-us/ and http://mysite.dev/contact-us/ and you'll find that they load content from
+the CMS.
+
+To avoid adding the `'model'` view data in every controller, we prefer to use a view composer:
+
+```php
+App::before(function($request) {
+    $page = CMS::model();
+    if ($page && $page->Exists()) {
+        View::share('model', $page);
+    }
+});
+```
+
+Then your controller method would be simply:
+
+```php
+<?php
+public static function showPage() {
+    return View::make('page');
+}
+```
+
+The Laravel docs don't indicate where would be a sensible place to put your view composers. We've decided to create a
+new file, `app/viewcomposers.php` (alongside `filters.php`) for them. To make that work it's just a matter of adding
+the following code to the bottom of your `app/start/global.php` file:
+
+```php
+/*
+|--------------------------------------------------------------------------
+| Require The View Composers File
+|--------------------------------------------------------------------------
+|
+| Next we will load the view composers file for the application. This gives
+| us a nice separate location to store our view composers and shared view
+| data definitions instead of putting them all in the main routes file.
+|
+*/
+
+require app_path().'/viewcomposers.php';
+```
+
+### Filtering content
+
+The `Silverstripe` (alias `CMS`) facade included in this package is good for loading the Silverstripe model for the a
+given URL, but that's all it can do. For more complex data queries you can simply use the [Silverstripe datamodel API]
+(http://doc.silverstripe.org/framework/en/topics/datamodel) directly.
+
+As usual in Silverstripe, the Stage (draft) or Live version of the record will be loaded automatically depending on the
+`?stage=` querystring parameter.
 
 
 Configuration
