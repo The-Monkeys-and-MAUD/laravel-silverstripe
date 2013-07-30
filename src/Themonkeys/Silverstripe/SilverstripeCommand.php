@@ -5,6 +5,7 @@ namespace Themonkeys\Silverstripe;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\Console\Input\InputOption;
+use Illuminate\Support\Facades\App;
 
 class SilverstripeCommand extends Command {
 
@@ -47,7 +48,7 @@ global \$_FILE_TO_URL_MAPPING;
 \$_FILE_TO_URL_MAPPING['$base'] = '$appUrl';
 EOT
             );
-            $this->getApplication()->shutdown(function($app) use ($envPath) {
+            App::shutdown(function($app) use ($envPath) {
                 unlink($envPath);
             });
         }
