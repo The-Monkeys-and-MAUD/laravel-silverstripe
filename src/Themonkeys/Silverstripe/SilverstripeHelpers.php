@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\App;
 
 if ( ! function_exists('ss'))
 {
@@ -16,29 +17,41 @@ if ( ! function_exists('ss'))
             // replace silverstripe links with ordinary links
             $value = \DBField::create_field('HTMLText', $value);
 
-            // process the <img> tags through img.blade.php
-            $value = preg_replace_callback('|<img[^>]+>|', function($matches) {
-                $DOM = new DOMDocument;
-                $DOM->loadHTML($matches[0]);
+            if (App::offsetExists('\Themonkeys\Silverstripe\ContentProcessor')) {
+                $contentProcessor = App::make('\Themonkeys\Silverstripe\ContentProcessor');
+                // process the <img> tags
+                $value = preg_replace_callback('|<img[^>]+>|', function($matches) use ($contentProcessor) {
+                    $DOM = new DOMDocument;
+                    $DOM->loadHTML($matches[0]);
+    
+                    $img = $DOM->getElementsByTagName('img')->item(0);
+                    $src = $img->getAttribute('src');
+                    $alt = $img->getAttribute('alt');
+                    $attributes = array();
+                    foreach ($img->attributes as $name => $value) {
+                        if ($name != 'src' && $name != 'alt') {
+                            $attributes[$name] = $value->textContent;
+                        }
+                    }
+    
+                    if (preg_match('|assets/Uploads/(_resampled/ResizedImage([0-9]+)-)(.*)$|', $src, $matches)) {
+                        // convert to the non-resampled src
+                        $src = 'assets/Uploads/' . $matches[3];
+                    }
+    
+                    // make a Silverstripe image out of this URL
+                    $image = Image::get()->filter('Filename', $src)->first();
+    
+                    // allow the ContentProcessor implementation to process the image
+                    return $contentProcessor->renderImage($src, $alt, $attributes);
 
-                $img = $DOM->getElementsByTagName('img')->item(0);
-                $src = $img->getAttribute('src');
-                $alt = $img->getAttribute('alt');
+                }, $value);
 
-                if (preg_match('|assets/Uploads/(_resampled/ResizedImage([0-9]+)-)(.*)$|', $src, $matches)) {
-                    // convert to the non-resampled src
-                    $src = 'assets/Uploads/' . $matches[3];
+                $processed = $contentProcessor->processContent($value);
+                if ($processed) {
+                    $value = $processed;
                 }
-
-                // make a Silverstripe image out of this URL
-                $image = Image::get()->filter('Filename', $src)->first();
-
-                return View::make('partials/img', array(
-                    'img' => $image,
-                    'alt' => $alt,
-                ))->render();
-
-            }, $value);
+            }
 
             return $value;
         }

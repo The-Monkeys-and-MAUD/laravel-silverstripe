@@ -361,7 +361,7 @@ And create the corresponding `app/views/page.blade.php`:
             <div class="content-container unit size3of4 lastUnit">
                 <article>
                     <h1>{{ $model->Title }}</h1>
-                    <div class="content">{{ $model->Content }}</div>
+                    <div class="content">{{ ss($model->Content) }}</div>
                 </article>
             </div>
         </div>
@@ -411,6 +411,24 @@ the following code to the bottom of your `app/start/global.php` file:
 */
 
 require app_path().'/viewcomposers.php';
+```
+
+### The ss() helper function
+
+You may have noticed in the example `app/views/page.blade.php` file above, we used an `ss()` function to process the
+content from the model.
+
+This is required because, to make the CMS more robust, Laravel stores certain things (such as intra-site links) in an
+intermediate form instead of as finished HTML. So because we're bypassing Silverstripe's built-in MVC framework we need
+to manually trigger this rendering. The `ss()` function is provided by this package to make this as painless as
+possible.
+
+If you want to do any further processing of CMS-authored content, the `ss()` function provides a mechanism to allow you
+to do this. Simply write an implementation of the `\Themonkeys\Silverstripe\ContentProcessor` class, and bind it into
+Laravel's IoC container (for example in `app/start/global.php`):
+
+```php
+App::bind('\Themonkeys\Silverstripe\ContentProcessor', 'MyContentProcessor');
 ```
 
 ### Filtering content
