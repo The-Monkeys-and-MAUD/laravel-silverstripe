@@ -43,7 +43,7 @@ if ( ! function_exists('ss'))
                     $image = Image::get()->filter('Filename', $src)->first();
     
                     // allow the ContentProcessor implementation to process the image
-                    return $contentProcessor->renderImage($src, $alt, $attributes);
+                    return $contentProcessor->renderImage($image, $alt, $attributes);
 
                 }, $value);
 
