@@ -233,7 +233,12 @@ replicated too. Silverstripe will use the system temp directory (e.g. `/tmp/`) i
 ```bash
 mkdir public/silverstripe/silverstripe-cache
 echo *$'\n''!.gitignore' > public/silverstripe/silverstripe-cache/.gitignore
+printf "%s\n" 'g/silverstripe-cache/d' w q | ed public/silverstripe/.gitignore
 ```
+
+> The above script creates the folder, adds a `.gitignore` file to that folder to stop the folder's contents being checked
+  in to git (but allows the `.gitignore` file itself to be checked in thus ensuring the folder exists), then removes the
+  `silverstripe-cache` line from the existing `public/silverstripe/.gitignore` file.
 
 The name `silverstripe-cache` is special and cannot be changed.
 
