@@ -108,8 +108,11 @@ integration with versions 3.0.5, 3.1.0-beta3, and the 3.1 development version (a
     composer create-project silverstripe/installer ./public/silverstripe/ 3.1.x-dev
     ```
 
-   The command will advise you to create an `_ss_environment.php` file; don't do that. The script then finishes with
-   an error but don't worry, that's only because Silverstripe's database connection details haven't yet been set up.
+   The script then finishes with an error but don't worry, that's only because Silverstripe's database connection
+   details haven't yet been set up.
+
+   > Note: If the command advises you to create an `_ss_environment.php` file, don't do that. We'll be using Laravel's
+     environment support to configure Silverstripe instead.
 
 3. Add the following to your `.htaccess` file **before** the Laravel rewrite rule:
 
@@ -256,10 +259,15 @@ php artisan silverstripe:password
 The command above will prompt you to choose a username (Silverstripe expects you to use an email address, but it works
 fine if it's just a plain old username like `admin`) and to enter and confirm your password.
 
+> Note: If the command fails with the error `This command is not allowed on the 'production' environment` then this
+  means Laravel hasn't correctly identified your `local` environment. To fix this, run `hostname` on your command line
+  and add a rule to your `app/bootstrap/start.php` file that matches your hostname (for example, this is usually
+  `"*.local"` on Mac OS X systems).
+
 ### Adjust the preview URL in your Page base class
 
 To make it possible to preview your pages in the CMS via Laravel routing, add the following method to your `Page` class
-in `public/silverstripe/mysite/Page.php`:
+in `public/silverstripe/mysite/code/Page.php`:
 
 ```php
 class Page extends SiteTree {
