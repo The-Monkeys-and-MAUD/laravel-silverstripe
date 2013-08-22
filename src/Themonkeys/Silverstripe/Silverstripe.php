@@ -62,7 +62,10 @@ class Silverstripe {
             } while ($segment = array_shift($segments));
         } else {
             // special case - home page
-            $model = \Home::get()->First();
+            $model = \SiteTree::get()->filter(array(
+                'URLSegment' => 'home',
+                'ParentID' => 0,
+            ))->First();
         }
         return static::$models[$url] = $model;
     }
