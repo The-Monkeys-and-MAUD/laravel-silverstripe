@@ -12,7 +12,11 @@ class Laravel {
         require_once static::basePath().'/bootstrap/start.php';
 
         $config = Config::get('database.connections');
-        $config = $config[Config::get('database.default')];
+        $connection = Config::get('silverstripe::database.connection');
+        if (is_null($connection)) {
+            $connection = Config::get('database.default');
+        }
+        $config = $config[$connection];
 
         $databaseConfig = array(
             "type" => $config['driver'] == 'mysql' ? '\Themonkeys\Silverstripe\MySQLDatabaseWrapper' : "Don't know how to translate Laravel database driver {$config['driver']} to Silverstripe database type",

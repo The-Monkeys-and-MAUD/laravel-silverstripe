@@ -13,6 +13,12 @@ This package provides:
 - automatic configuration of Silverstripe's database settings based on your Laravel configuration
 - automatic coupling of Silverstripe's log system through to Laravel's log system
 
+Requirements
+------------
+
+- **Laravel 4.1.x**: If you need to use Laravel 4.0.x, you will need to use v1.0 of this package. The current release
+  only works on Laravel 4.1.x.
+
 Installation
 ------------
 
@@ -90,7 +96,7 @@ statement:
 ```php
 <?php
 
-use Illuminate\Routing\Controllers\Controller;
+use Illuminate\Routing\Controller;
 
 class BaseController extends Controller {
 ```
@@ -98,18 +104,18 @@ class BaseController extends Controller {
 ### Install Silverstripe
 
 Visit http://www.silverstripe.org/ and decide which version of Silverstripe you'd like to use. We've tested the Laravel
-integration with versions 3.0.5, 3.1.0-beta3, and the 3.1 development version (at the time of writing).
+integration with versions 3.0.5, 3.1.0-beta3, and 3.1.2.
 
 1. Create a folder inside your Laravel project called `public/silverstripe/`.
-2. Install Silverstripe into that folder. For example, to install the 3.1 development version, execute the following
-   from the base directory of your project:
+2. Install Silverstripe into that folder. For example, to install version 3.1.2, execute the following from the base
+   directory of your project:
 
     ```bash
-    composer create-project silverstripe/installer ./public/silverstripe/ 3.1.x-dev
+    composer create-project silverstripe/installer ./public/silverstripe/ 3.1.2
     ```
 
-   The script then finishes with an error but don't worry, that's only because Silverstripe's database connection
-   details haven't yet been set up.
+   For 3.0.x versions of Silverstripe, the script finishes with an error but don't worry, that's only because
+   Silverstripe's database connection details haven't yet been set up. Version 3.1.2 installs without errors for us.
 
    > Note: If the command advises you to create an `_ss_environment.php` file, don't do that. We'll be using Laravel's
      environment support to configure Silverstripe instead.
@@ -126,22 +132,32 @@ integration with versions 3.0.5, 3.1.0-beta3, and the 3.1 development version (a
     </IfModule>
     ```
 
-4. Add a silverstripe `RewriteCond` line as the first line of the Laravel rewrite rule in your `.htaccess` file:
+4. Add a silverstripe `RewriteCond` line as the first line of both Laravel rewrite rules in your `.htaccess` file:
 
     ```ApacheConf
     # ------------------------------------------------------------------------------
     # | Laravel framework                                                          |
     # ------------------------------------------------------------------------------
     <IfModule mod_rewrite.c>
-        Options -MultiViews
+        <IfModule mod_negotiation.c>
+            Options -MultiViews
+        </IfModule>
+
         RewriteEngine On
 
+        # Redirect Trailing Slashes...
+        RewriteCond %{REQUEST_URI} !^/silverstripe
+        RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+        # Handle Front Controller...
         RewriteCond %{REQUEST_URI} !^/silverstripe
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^ index.php [L]
     </IfModule>
     ```
+
+
 5. We'll be delivering CMS content pages via Laravel rather than via Silverstripe's built-in MVC framework; so it's a
    good idea to disable the default `/silverstripe/` content URLs. You can do this by adding the following 404 rules
    to your `public/silverstripe/.htaccess` file after the existing 403 rules that ship with Silverstripe:
@@ -223,6 +239,11 @@ return array(
 
 > The user you configure should have CREATE, ALTER, INDEX, DROP permissions so that Silverstripe can control the
   database structure.
+
+If you want to use a connection other than the default connection, then see the [Configuration](#configuration) section
+below to publish the package configuration into your project, then specify the connection name to use in your
+`app/config/packages/themonkeys/laravel-silverstripe/database.php` file (or an environment-specific file such as
+`app/config/packages/themonkeys/laravel-silverstripe/production/database.php`).
 
 ### Optional: create a Silverstripe cache folder
 
