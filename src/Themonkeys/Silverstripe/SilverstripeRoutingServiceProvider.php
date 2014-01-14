@@ -16,7 +16,7 @@ class SilverstripeRoutingServiceProvider extends RoutingServiceProvider {
     {
         $this->app['router'] = $this->app->share(function($app)
         {
-            $router = new Router($app);
+            $router = new Router($app['events'], $app);
 
             // If the current application environment is "testing", we will disable the
             // routing filters, since they can be tested independently of the routes
