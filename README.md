@@ -479,10 +479,10 @@ Configuration
 -------------
 
 To configure the package, you can use the following command to copy the configuration file to
-`app/config/packages/themonkeys/silverstripe`.
+`app/config/packages/themonkeys/laravel-silverstripe`.
 
 ```sh
-php artisan config:publish themonkeys/silverstripe
+php artisan config:publish themonkeys/laravel-silverstripe
 ```
 
 Or you can just create new files in that folder and only override the settings you need.

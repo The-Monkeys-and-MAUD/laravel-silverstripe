@@ -31,6 +31,8 @@ class SilverstripeRoutingServiceProvider extends RoutingServiceProvider {
     }
 
     public function boot() {
+        $this->package('themonkeys/laravel-silverstripe', 'silverstripe');
+
         $this->app['silverstripe.commands.build'] = $this->app->share(function($app) {
             return new BuildCommand();
         });
