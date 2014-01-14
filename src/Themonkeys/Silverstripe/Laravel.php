@@ -9,7 +9,10 @@ class Laravel {
         global $databaseConfig;
 
         // bootstrap Laravel
-        require_once static::basePath().'/bootstrap/start.php';
+        $app = require_once static::basePath().'/bootstrap/start.php';
+        if ($app !== true) {
+            $app->boot();
+        }
 
         $config = Config::get('database.connections');
         $connection = Config::get('silverstripe::database.connection');
